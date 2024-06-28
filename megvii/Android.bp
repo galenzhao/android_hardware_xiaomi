@@ -17,7 +17,7 @@ cc_library_shared {
     defaults: ["libMegviiFacepp_defaults"],
 }
 
-cc_library_shared {
-    name: "libmegface",
-    vendor: true,
-}
+//cc_library_shared {
+//    name: "libmegface",
+//    vendor: true,
+//}

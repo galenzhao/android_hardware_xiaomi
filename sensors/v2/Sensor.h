@@ -106,6 +106,7 @@ class SysfsPollingOneShotSensor : public OneShotSensor {
     virtual void setOperationMode(OperationMode mode) override;
     virtual std::vector<Event> readEvents() override;
     virtual void fillEventData(Event& event);
+    virtual bool readFd(const int fd);
 
   protected:
     virtual void run() override;
@@ -118,6 +119,45 @@ class SysfsPollingOneShotSensor : public OneShotSensor {
     struct pollfd mPolls[2];
     int mWaitPipeFd[2];
     int mPollFd;
+};
+
+class DoubleTapSensor : public SysfsPollingOneShotSensor {
+  public:
+    DoubleTapSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+        : SysfsPollingOneShotSensor(
+                  sensorHandle, callback, "/sys/class/touch/touch_dev/gesture_double_tap_state",
+                  "/sys/class/touch/touch_dev/gesture_double_tap_enabled", "Double Tap Sensor",
+                  "org.lineageos.sensor.double_tap",
+                  static_cast<SensorType>(static_cast<int32_t>(SensorType::DEVICE_PRIVATE_BASE) +
+                                          1)) {}
+};
+
+class SingleTapSensor : public SysfsPollingOneShotSensor {
+  public:
+    SingleTapSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+        : SysfsPollingOneShotSensor(
+                  sensorHandle, callback, "/sys/class/touch/touch_dev/gesture_single_tap_state",
+                  "/sys/class/touch/touch_dev/gesture_single_tap_enabled", "Single Tap Sensor",
+                  "org.lineageos.sensor.single_tap",
+                  static_cast<SensorType>(static_cast<int32_t>(SensorType::DEVICE_PRIVATE_BASE) +
+                                          2)) {}
+};
+
+class UdfpsSensor : public SysfsPollingOneShotSensor {
+  public:
+    UdfpsSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+        : SysfsPollingOneShotSensor(
+                  sensorHandle, callback, "/sys/class/touch/touch_dev/fod_press_status",
+                  "/sys/class/touch/touch_dev/fod_longpress_gesture_enabled", "UDFPS Sensor",
+                  "org.lineageos.sensor.udfps",
+                  static_cast<SensorType>(static_cast<int32_t>(SensorType::DEVICE_PRIVATE_BASE) +
+                                          3)) {}
+    virtual void fillEventData(Event& event);
+    virtual bool readFd(const int fd);
+
+  private:
+    int mScreenX;
+    int mScreenY;
 };
 
 }  // namespace implementation

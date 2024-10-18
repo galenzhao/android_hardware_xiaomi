@@ -324,7 +324,7 @@ void SysfsPollingOneShotSensor::run() {
                 continue;
             }
 
-            if (mPolls[1].revents == mPolls[1].events && readBool(mPollFd, true /* seek */)) {
+            if (mPolls[1].revents == mPolls[1].events && readFd(mPollFd)) {
                 activate(false, false, false);
                 mCallback->postEvents(readEvents(), isWakeUpSensor());
             } else if (mPolls[0].revents == mPolls[0].events) {
@@ -355,6 +355,44 @@ std::vector<Event> SysfsPollingOneShotSensor::readEvents() {
 void SysfsPollingOneShotSensor::fillEventData(Event& event) {
     event.u.data[0] = 0;
     event.u.data[1] = 0;
+}
+
+bool SysfsPollingOneShotSensor::readFd(const int fd) {
+    return readBool(fd, true /* seek */);
+}
+
+void UdfpsSensor::fillEventData(Event& event) {
+    event.u.data[0] = mScreenX;
+    event.u.data[1] = mScreenY;
+}
+
+bool UdfpsSensor::readFd(const int fd) {
+    char buffer[512];
+    int state = 0;
+    int rc;
+
+    rc = lseek(fd, 0, SEEK_SET);
+    if (rc < 0) {
+        ALOGE("failed to seek: %d", rc);
+        return false;
+    }
+    rc = read(fd, &buffer, sizeof(buffer));
+    if (rc < 0) {
+        ALOGE("failed to read state: %d", rc);
+        return false;
+    }
+    rc = sscanf(buffer, "%d,%d,%d", &mScreenX, &mScreenY, &state);
+    if (rc == 1) {
+        // If fod_press_status contains only one value,
+        // assume that just reports the state
+        state = mScreenX;
+        mScreenX = 0;
+        mScreenY = 0;
+    } else if (rc < 3) {
+        ALOGE("failed to parse fp state: %d", rc);
+        return false;
+    }
+    return state > 0;
 }
 
 }  // namespace implementation
